@@ -6,8 +6,7 @@ import (
 	"errors"
 	"strconv"
 
-	"github.com/aead/chacha20"
-	"github.com/aead/chacha20/chacha"
+	"golang.org/x/crypto/chacha20"
 )
 
 // ErrRepeatedSalt means detected a reused salt
@@ -59,10 +58,10 @@ func AESCFB(key []byte) (Cipher, error) {
 // IETF-variant of chacha20
 type chacha20ietfkey []byte
 
-func (k chacha20ietfkey) IVSize() int                       { return chacha.INonceSize }
+func (k chacha20ietfkey) IVSize() int                       { return chacha20.NonceSize }
 func (k chacha20ietfkey) Decrypter(iv []byte) cipher.Stream { return k.Encrypter(iv) }
 func (k chacha20ietfkey) Encrypter(iv []byte) cipher.Stream {
-	ciph, err := chacha20.NewCipher(iv, k)
+	ciph, err := chacha20.NewUnauthenticatedCipher(k, iv)
 	if err != nil {
 		panic(err) // should never happen
 	}
@@ -70,18 +69,18 @@ func (k chacha20ietfkey) Encrypter(iv []byte) cipher.Stream {
 }
 
 func Chacha20IETF(key []byte) (Cipher, error) {
-	if len(key) != chacha.KeySize {
-		return nil, KeySizeError(chacha.KeySize)
+	if len(key) != chacha20.KeySize {
+		return nil, KeySizeError(chacha20.KeySize)
 	}
 	return chacha20ietfkey(key), nil
 }
 
 type xchacha20key []byte
 
-func (k xchacha20key) IVSize() int                       { return chacha.XNonceSize }
+func (k xchacha20key) IVSize() int                       { return chacha20.NonceSizeX }
 func (k xchacha20key) Decrypter(iv []byte) cipher.Stream { return k.Encrypter(iv) }
 func (k xchacha20key) Encrypter(iv []byte) cipher.Stream {
-	ciph, err := chacha20.NewCipher(iv, k)
+	ciph, err := chacha20.NewUnauthenticatedCipher(k, iv)
 	if err != nil {
 		panic(err) // should never happen
 	}
@@ -89,8 +88,8 @@ func (k xchacha20key) Encrypter(iv []byte) cipher.Stream {
 }
 
 func Xchacha20(key []byte) (Cipher, error) {
-	if len(key) != chacha.KeySize {
-		return nil, KeySizeError(chacha.KeySize)
+	if len(key) != chacha20.KeySize {
+		return nil, KeySizeError(chacha20.KeySize)
 	}
 	return xchacha20key(key), nil
 }
